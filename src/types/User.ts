@@ -4,3 +4,8 @@ export interface User {
   email: string;
   phone: string;
 }
+
+export type LoadingErrors =
+  | 'there is no posts'
+  | 'Something went wrong, please try again'
+  | '';
