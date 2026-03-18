@@ -1,3 +1,4 @@
+/* eslint-disable @typescript-eslint/indent */
 import classNames from 'classnames';
 import React, { useState } from 'react';
 import { addComment } from '../api/api-comments';
@@ -10,67 +11,84 @@ type Props = {
   setIsError: React.Dispatch<React.SetStateAction<boolean>>;
 };
 
+const initialDataInputs = {
+  name: '',
+  email: '',
+  body: '',
+};
+
+const initialDataErrors = {
+  nameError: false,
+  emailError: false,
+  bodyError: false,
+};
+
+const initialData = {
+  ...initialDataInputs,
+  ...initialDataErrors,
+};
+
+type DataFields = 'name' | 'email' | 'body';
+
 export const NewCommentForm: React.FC<Props> = ({
   post,
   setComments,
   setIsError,
 }) => {
-  const [name, setName] = useState('');
-  const [email, setEmail] = useState('');
-  const [body, setBody] = useState('');
-  const [errorMessages, setErrorMessages] = useState<{
-    nameError: boolean;
-    emailError: boolean;
-    bodyError: boolean;
-  }>({ nameError: false, emailError: false, bodyError: false });
+  const [data, setData] = useState(initialData);
   const [loading, setLoading] = useState(false);
 
   function handleReset() {
-    setName('');
-    setEmail('');
-    setBody('');
-    setErrorMessages({ nameError: false, emailError: false, bodyError: false });
+    setData(initialData);
   }
 
   async function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
 
-    if (name !== '' && email !== '' && body !== '') {
-      setLoading(true);
-      try {
-        const postFromServer = await addComment({
-          postId: post.id,
-          name,
-          email,
-          body,
-        });
+    if (
+      data.name.trim() === '' ||
+      data.email.trim() === '' ||
+      data.body.trim() === ''
+    ) {
+      setData(prevData => ({
+        ...prevData,
+        nameError: data.name.trim() === '',
+        emailError: data.email.trim() === '',
+        bodyError: data.body.trim() === '',
+      }));
 
-        setComments(prevComments => [...prevComments, postFromServer]);
-        setBody('');
-        setErrorMessages({
-          nameError: false,
-          emailError: false,
-          bodyError: false,
-        });
-      } catch {
-        setIsError(true);
-        setBody(body);
-      } finally {
-        setLoading(false);
-      }
+      return;
     }
 
-    if (!name) {
-      setErrorMessages(prevErrors => ({ ...prevErrors, nameError: true }));
-    }
+    setLoading(true);
+    try {
+      const postFromServer = await addComment({
+        postId: post.id,
+        name: data.name,
+        email: data.email,
+        body: data.body,
+      });
 
-    if (!email) {
-      setErrorMessages(prevErrors => ({ ...prevErrors, emailError: true }));
+      setComments(prevComments => [...prevComments, postFromServer]);
+      setData(prevData => ({ ...prevData, body: '', ...initialDataErrors }));
+    } catch {
+      setIsError(true);
+    } finally {
+      setLoading(false);
     }
+  }
 
-    if (!body) {
-      setErrorMessages(prevErrors => ({ ...prevErrors, bodyError: true }));
-    }
+  function handleInput(
+    field: DataFields,
+    event:
+      | React.ChangeEvent<HTMLInputElement>
+      | React.ChangeEvent<HTMLTextAreaElement>,
+  ) {
+    setData(prevData => ({
+      ...prevData,
+      [field]: event.target.value,
+      [`${field}Error`]: false,
+    }));
   }
 
   return (
@@ -87,23 +105,19 @@ export const NewCommentForm: React.FC<Props> = ({
             id="comment-author-name"
             placeholder="Name Surname"
             className={classNames('input', {
-              'is-danger': errorMessages.nameError,
+              'is-danger': data.nameError,
             })}
             onChange={event => {
-              setErrorMessages(prevErrors => ({
-                ...prevErrors,
-                nameError: false,
-              }));
-              setName(event.target.value);
+              handleInput('name', event);
             }}
-            value={name}
+            value={data.name}
           />
 
           <span className="icon is-small is-left">
             <i className="fas fa-user" />
           </span>
 
-          {errorMessages.nameError && (
+          {data.nameError && (
             <span
               className="icon is-small is-right has-text-danger"
               data-cy="ErrorIcon"
@@ -113,7 +127,7 @@ export const NewCommentForm: React.FC<Props> = ({
           )}
         </div>
 
-        {errorMessages.nameError && (
+        {data.nameError && (
           <p className="help is-danger" data-cy="ErrorMessage">
             Name is required
           </p>
@@ -132,23 +146,19 @@ export const NewCommentForm: React.FC<Props> = ({
             id="comment-author-email"
             placeholder="email@test.com"
             className={classNames('input', {
-              'is-danger': errorMessages.emailError,
+              'is-danger': data.emailError,
             })}
             onChange={event => {
-              setErrorMessages(prevErrors => ({
-                ...prevErrors,
-                emailError: false,
-              }));
-              setEmail(event.target.value);
+              handleInput('email', event);
             }}
-            value={email}
+            value={data.email}
           />
 
           <span className="icon is-small is-left">
             <i className="fas fa-envelope" />
           </span>
 
-          {errorMessages.emailError && (
+          {data.emailError && (
             <span
               className="icon is-small is-right has-text-danger"
               data-cy="ErrorIcon"
@@ -158,7 +168,7 @@ export const NewCommentForm: React.FC<Props> = ({
           )}
         </div>
 
-        {errorMessages.emailError && (
+        {data.emailError && (
           <p className="help is-danger" data-cy="ErrorMessage">
             Email is required
           </p>
@@ -176,20 +186,16 @@ export const NewCommentForm: React.FC<Props> = ({
             name="body"
             placeholder="Type comment here"
             className={classNames('input', {
-              'is-danger': errorMessages.bodyError,
+              'is-danger': data.bodyError,
             })}
             onChange={event => {
-              setErrorMessages(prevErrors => ({
-                ...prevErrors,
-                bodyError: false,
-              }));
-              setBody(event.target.value);
+              handleInput('body', event);
             }}
-            value={body}
+            value={data.body}
           />
         </div>
 
-        {errorMessages.bodyError && (
+        {data.bodyError && (
           <p className="help is-danger" data-cy="ErrorMessage">
             Enter some text
           </p>
