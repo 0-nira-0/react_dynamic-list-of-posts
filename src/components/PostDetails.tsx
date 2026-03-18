@@ -18,6 +18,7 @@ export const PostDetails: React.FC<Props> = ({ post }) => {
   async function handleCommentLoad() {
     setIsError(false);
     setLoading(true);
+    setIsActiveForm(false);
 
     try {
       setComments(await getComments(post.id));
