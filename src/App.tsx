@@ -19,32 +19,31 @@ export const App = () => {
   const [posts, setPosts] = useState<Post[]>([]);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [selectedPost, setSelectedPost] = useState<Post | null>(null);
-  const [isError, setIsError] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [fetchState, setFetchState] = useState({
+    error: false,
+    loading: false,
+  });
 
   async function handleUsersLoad() {
-    setIsError(false);
+    setFetchState(prevStates => ({ ...prevStates, error: false }));
     try {
       setUsers(await getUsers());
     } catch {
-      setIsError(true);
+      setFetchState(prevStates => ({ ...prevStates, error: true }));
     }
   }
 
-  async function handlePostsLoad() {
+  async function handlePostsLoad(userId: User['id']) {
     setSelectedPost(null);
-    setIsError(false);
-    setLoading(true);
+    setFetchState({ loading: true, error: false });
     try {
-      const postsFromServer = selectedUser
-        ? await getPosts(selectedUser.id)
-        : posts;
+      const postsFromServer = await getPosts(userId);
 
       setPosts(postsFromServer);
     } catch {
-      setIsError(true);
+      setFetchState(prevStates => ({ ...prevStates, error: true }));
     } finally {
-      setLoading(false);
+      setFetchState(prevStates => ({ ...prevStates, loading: false }));
     }
   }
 
@@ -54,7 +53,7 @@ export const App = () => {
 
   useEffect(() => {
     if (selectedUser) {
-      handlePostsLoad();
+      handlePostsLoad(selectedUser.id);
     }
   }, [selectedUser]);
 
@@ -79,9 +78,9 @@ export const App = () => {
                   <p data-cy="NoSelectedUser">No user selected</p>
                 )}
 
-                {loading && <Loader />}
+                {fetchState.loading && <Loader />}
 
-                {isError && !loading && (
+                {fetchState.error && !fetchState.loading && (
                   <div
                     className="notification is-danger"
                     data-cy="PostsLoadingError"
@@ -90,7 +89,7 @@ export const App = () => {
                   </div>
                 )}
 
-                {posts.length !== 0 && !loading && (
+                {posts.length !== 0 && !fetchState.loading && (
                   <PostsList
                     posts={posts}
                     selectedPost={selectedPost}
@@ -98,11 +97,17 @@ export const App = () => {
                   />
                 )}
 
-                {posts.length === 0 && selectedUser && !isError && !loading && (
-                  <div className="notification is-warning" data-cy="NoPostsYet">
-                    No posts yet
-                  </div>
-                )}
+                {posts.length === 0 &&
+                  selectedUser &&
+                  !fetchState.error &&
+                  !fetchState.loading && (
+                    <div
+                      className="notification is-warning"
+                      data-cy="NoPostsYet"
+                    >
+                      No posts yet
+                    </div>
+                  )}
               </div>
             </div>
           </div>
@@ -121,7 +126,7 @@ export const App = () => {
           >
             {selectedPost && selectedPost.userId && (
               <div className="tile is-child box is-success ">
-                <PostDetails key={selectedPost.id} post={selectedPost} />
+                <PostDetails post={selectedPost} />
               </div>
             )}
           </div>
