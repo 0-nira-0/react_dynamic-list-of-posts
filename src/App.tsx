@@ -126,7 +126,7 @@ export const App = () => {
           >
             {selectedPost && selectedPost.userId && (
               <div className="tile is-child box is-success ">
-                <PostDetails key={selectedPost.id} post={selectedPost} />
+                <PostDetails post={selectedPost} />
               </div>
             )}
           </div>

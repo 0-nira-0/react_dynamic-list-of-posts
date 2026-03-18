@@ -15,18 +15,6 @@ export const PostDetails: React.FC<Props> = ({ post }) => {
   const [isActiveForm, setIsActiveForm] = useState(false);
   const [comments, setComments] = useState<Comment[]>([]);
 
-  async function handleCommentDelete(commentId: Comment['id']) {
-    try {
-      setComments(prevComments =>
-        prevComments.filter(comment => comment.id !== commentId),
-      );
-      await deleteComment(commentId);
-    } catch {
-      setIsError(true);
-      setComments(comments);
-    }
-  }
-
   async function handleCommentLoad() {
     setIsError(false);
     setLoading(true);
@@ -40,9 +28,21 @@ export const PostDetails: React.FC<Props> = ({ post }) => {
     }
   }
 
+  async function handleCommentDelete(commentId: Comment['id']) {
+    try {
+      setComments(prevComments =>
+        prevComments.filter(comment => comment.id !== commentId),
+      );
+      await deleteComment(commentId);
+    } catch {
+      setIsError(true);
+      await handleCommentLoad();
+    }
+  }
+
   useEffect(() => {
     handleCommentLoad();
-  }, []);
+  }, [post.id]);
 
   return (
     <div className="content" data-cy="PostDetails">
